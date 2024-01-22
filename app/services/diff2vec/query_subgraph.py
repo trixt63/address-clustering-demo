@@ -35,16 +35,6 @@ def preprocess_subgraph(subgraph): #preprocess subgraph: get subgraph <= 100 ver
     return filterr
 
 def query_subgraph(chain_id, address, edges: list[Edge]): #query and preprocess the subgraph
-    # get_logger(f'start to query subgraph of {chain}')
-    # client = MongoDB()
-    # db = client._db
-    # collection = db[f'subgraph_{chain}_{radius}']
-    # cursor = collection.find()
-    # df_lst = []
-    # for re in cursor[0:100]:
-    #     df_sub = pd.DataFrame([re])
-    #     df_lst.append(df_sub)
-    # subgraph = pd.concat(df_lst)
     edges_list = [{'from': e.from_address, 'to': e.to_address} for e in edges]
     subgraph_df = pd.DataFrame([{'_id': f'{chain_id}_{address}',
                                 'address': address,
