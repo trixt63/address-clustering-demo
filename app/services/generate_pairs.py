@@ -8,6 +8,14 @@ from app.utils.logger_utils import get_logger
 from app.models.graph.edge import Edge
 from app.models.graph.address_training import AddressTraining
 from app.constants.network_constants import NATIVE_TOKEN
+from app.services.diff2vec.query_subgraph import query_subgraph
+
+from app.services.diff2vec.diffusion_2_vec import *
+from app.services.diff2vec.helper import *
+from itertools import chain
+from IPython.utils import io
+
+SAVING_DIR = '../../data'
 
 
 class PairsGenerator:
@@ -59,6 +67,29 @@ class PairsGenerator:
             addresses_dict[e.from_address].set_from_vertex_data(edge=e, prominent_tokens=prominent_tokens)
             addresses_dict[e.to_address].set_to_vertex_data(edge=e, prominent_tokens=prominent_tokens)
 
+    def node_embedding(self, address):
+        subgraph_edges: list[Edge] = self.arango.get_subgraph_edges(address=address, depth=2)
+        subgraph_df = query_subgraph(chain_id=self.chain_id,
+                                     address=address,
+                                     edges=subgraph_edges)
+        subgraph_df['Diff2VecEmbedding'] = subgraph_df.apply(lambda row: getDiff2VecEmbedding(row), axis=1)
+        subgraph_df = subgraph_df.explode(['vertices','Diff2VecEmbedding'])
+        subgraph_df = subgraph_df[['_id', 'vertices','Diff2VecEmbedding']]
+        subgraph_df.to_csv(f"{SAVING_DIR}/embedding_df.csv", index=False)
+
+
+def getDiff2VecEmbedding(row):
+    with io.capture_output() as captured:
+        walks, counts = run_parallel_feature_creation(row['edges'],
+                                                      16,
+                                                      4,
+                                                      4)
+        model = learn_pooled_embeddings(walks, counts)
+        embedding_row = list(map(lambda x: model.wv.get_vector(x), row['vertices']))
+    return embedding_row
+
 
 if __name__ == '__main__':
     pair_generator = PairsGenerator(chain_id='0x1')
+    _address = '0x6d6ea51d6ef6cfc9671b362da3b6068a126eee25'
+    pair_generator.node_embedding(_address)

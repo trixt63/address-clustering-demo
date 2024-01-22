@@ -14,6 +14,22 @@ selenium==4.6.0
 SQLAlchemy~=1.4.46
 timeout-decorator
 
+#NetworkX==2.8.8
+texttable==1.6.7
+#numpy ==1.21.5
+pandas ==2.0.1
+lightgbm~=4.1.0
+node2vec
+imblearn
+scikit-learn
+matplotlib
+optuna==3.2.0
+joblib==1.3.2
+tqdm==4.66.1
+gensim==4.3.2
+networkx==3.2.1
+texttable
+
 sanic==22.12.0
 Sanic-Cors==2.2.0
 sanic-ext==22.12.0
