@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from app.constants import TimeConstants
+from app.constants.time_constants import TimeConstants
 from app.utils.logger_utils import get_logger
 
 logger = get_logger('Time utils')
