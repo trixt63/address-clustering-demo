@@ -60,11 +60,11 @@ def combine_from_to(df_from,df_to,df_embedding) -> pd.DataFrame:
 
     df = df.fillna(0)
     df = df.drop_duplicates()
-    df['To_time'] =df['To_time'].apply(get_time_histogram)
+    df['To_time'] = df['To_time'].apply(get_time_histogram)
     df['From_time'] = df['From_time'].apply(get_time_histogram)
     df['To_time'] = df['To_time'].apply(lambda row: eval(row))
     df['From_time'] = df['From_time'].apply(lambda row: eval(row))
-    df_embedding.rename(columns = {"vertices":"address"}, inplace= True)
+    df_embedding.rename(columns={"vertices": "address"}, inplace= True)
     logger.info("Merging embedding information ...")
 
     df = df.merge(df_embedding, on=['_id','address'], how = 'left').dropna()

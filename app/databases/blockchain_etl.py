@@ -2,7 +2,7 @@ from typing import List, Dict
 from pymongo import MongoClient
 
 from config import BlockchainETLConfig
-from app.constants.blockchain_etl_constants import BlockchainETLCollections
+from app.constants import BlockchainETLCollections
 from app.utils.logger_utils import get_logger
 
 logger = get_logger('Blockchain ETL')

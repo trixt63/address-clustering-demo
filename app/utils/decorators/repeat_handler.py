@@ -1,7 +1,7 @@
 import time
 from functools import wraps
 
-from app.constants.time_constants import SLEEP_DURATION
+from app.constants import SLEEP_DURATION
 from app.utils.logger_utils import get_logger
 from app.utils.time_utils import round_timestamp
 

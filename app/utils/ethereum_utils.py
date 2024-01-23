@@ -3,7 +3,7 @@ import itertools
 from typing import List
 import time
 
-from app.constants.network_constants import Chains, Networks
+from app.constants import Chains, Networks
 from app.utils.utils import chunks
 from app.services.blockchain.providers.rpc import BatchHTTPProvider
 from app.services.blockchain.json_rpc_requests import generate_get_code_json_rpc

@@ -15,6 +15,7 @@ from app.services.diff2vec.diffusion_2_vec import run_parallel_feature_creation,
 from app.services.combine_features import combine_from_to, generate_training_dataset, diff_cosine
 
 SAVING_DIR = './data'
+TOKENS_DIR = './app/artifacts/tokens'
 
 
 class PairsGenerator:
@@ -39,7 +40,7 @@ class PairsGenerator:
     def get_prominent_tokens(self) -> set[str]:
         # top tokens
         top_tokens = {}
-        with open(f'{SAVING_DIR}/token_data/top_token.json', 'r') as f:
+        with open(f'{TOKENS_DIR}/top_tokens.json', 'r') as f:
             top_tokens_all_chains = json.load(f)
         for doc in top_tokens_all_chains:
             if doc['_id'] == f'top_tokens_{self.chain_id}':
@@ -47,7 +48,7 @@ class PairsGenerator:
         top_tokens_addresses = [datum['address'] for datum in top_tokens['tokens']]
 
         # stable coins
-        with open(f'{SAVING_DIR}/token_data/stable_token.json', 'r') as f:
+        with open(f'{TOKENS_DIR}/stable_tokens.json', 'r') as f:
             stablecoins_all_chains = json.load(f)
         stablecoin_addresses = [doc['address'] for doc in stablecoins_all_chains if doc['chainId'] == self.chain_id]
 

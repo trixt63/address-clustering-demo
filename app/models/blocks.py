@@ -3,8 +3,8 @@ import time
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
 
-from app.constants.network_constants import Chains, Networks
-from app.constants.time_constants import TimeConstants
+from app.constants import Chains, Networks
+from app.constants import TimeConstants
 from app.services.blockchain.eth_services import EthService
 from app.utils.logger_utils import get_logger
 from app.utils.decorators.time_execute_decorator import sync_log_time_exe, TimeExeTag
