@@ -19,6 +19,7 @@ SAVING_DIR = './data'
 
 class PairsGenerator:
     def __init__(self, chain_id):
+        """Create pairs from an input address"""
         self.chain_id = chain_id
         if chain_id == '0x38':
             self.chain_name = 'bsc'
@@ -129,26 +130,19 @@ class PairsGenerator:
         node_embedding_df.reset_index(drop=True, inplace=True)
 
         combined_df = combine_from_to(df_from=from_df, df_to=to_df, df_embedding=node_embedding_df)
-        pairs_df = generate_training_dataset(df=combined_df)
-        return pairs_df
+        _pairs_df = generate_training_dataset(df=combined_df)
+        return _pairs_df
 
     def process_pairs_features(self, address) -> pd.DataFrame:
-        pairs_df = self.combine_features(address)
-        # pairs_df['X_Diff2VecEmbedding'] = pairs_df['X_Diff2VecEmbedding'].apply(lambda x: get_embedding_list(x))
-        # pairs_df['SubX_Diff2VecEmbedding'] = pairs_df['SubX_Diff2VecEmbedding'].apply(lambda x: get_embedding_list(x))
-        pairs_df['Diff2_Vec_Simi'] = pairs_df.apply(lambda x: diff_cosine(x), axis=1)
-        pairs_df[[f"X_Time{i}" for i in range(24)]] = pairs_df.X_Time.apply(pd.Series)
-        pairs_df[[f"SubX_Time{i}" for i in range(24)]] = pairs_df.SubX_Time.apply(pd.Series)
-        return pairs_df
+        _pairs_df = self.combine_features(address)
+        _pairs_df['Diff2_Vec_Simi'] = _pairs_df.apply(lambda x: diff_cosine(x), axis=1)
+        _pairs_df[[f"X_Time{i}" for i in range(24)]] = _pairs_df.X_Time.apply(pd.Series)
+        _pairs_df[[f"SubX_Time{i}" for i in range(24)]] = _pairs_df.SubX_Time.apply(pd.Series)
+        return _pairs_df
 
 
 if __name__ == '__main__':
     pair_generator = PairsGenerator(chain_id='0x1')
     _address = '0x6d6ea51d6ef6cfc9671b362da3b6068a126eee25'
-    # node_embedding_df = pair_generator.get_node_embedding_feature(_address)
-    # node_embedding_df.to_csv(f'{SAVING_DIR}/node_embedding.csv')
-    # from_df, to_df = pair_generator.get_time_amount_feature(_address)
-    # from_df.to_csv(f'{SAVING_DIR}/from_df.csv')
-    # to_df.to_csv(f'{SAVING_DIR}/to_df.csv')
     pairs_df = pair_generator.process_pairs_features(_address)
     pairs_df.to_csv(f'{SAVING_DIR}/pairs_df.csv')
