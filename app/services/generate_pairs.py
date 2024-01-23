@@ -1,7 +1,7 @@
 import json
-from collections import defaultdict
 import pandas as pd
 from statistics import median
+from IPython.utils import io
 
 from app.databases.mongodb import MongoDB
 from app.databases.mongodb_entity import MongoDBEntity
@@ -10,13 +10,11 @@ from app.utils.logger_utils import get_logger
 from app.models.graph.edge import Edge
 from app.models.graph.address_training import AddressTraining
 from app.constants.network_constants import NATIVE_TOKEN
-from app.services.diff2vec.query_subgraph import query_subgraph
-from app.services.diff2vec.diffusion_2_vec import *
-from app.services.diff2vec.helper import *
-from itertools import chain
-from IPython.utils import io
+from app.services.query_subgraph import query_subgraph
+from app.services.diff2vec.diffusion_2_vec import run_parallel_feature_creation, learn_pooled_embeddings
+from app.services.combine_features import combine_from_to, generate_training_dataset, diff_cosine
 
-SAVING_DIR = '../../data'
+SAVING_DIR = './data'
 
 
 class PairsGenerator:
@@ -88,14 +86,14 @@ class PairsGenerator:
             _from_dict = {token_addr: [median(values)] for token_addr, values in address_obj.from_amount.items()}
             _from_dict['_id'] = [f'{self.chain_id}_{address}']
             _from_dict['address'] = [addr]
-            _from_dict['time'] = [address_obj.time_histogram]
+            _from_dict['time'] = [str(address_obj.time_histogram)]
             _from_df = pd.DataFrame(_from_dict)
             from_dfs_list.append(_from_df)
 
             _to_dict = {token_addr: [median(values)] for token_addr, values in address_obj.to_amount.items()}
             _to_dict['_id'] = [f'{self.chain_id}_{address}']
             _to_dict['address'] = [addr]
-            _to_dict['time'] = [address_obj.time_histogram]
+            _to_dict['time'] = [str(address_obj.time_histogram)]
             _to_df = pd.DataFrame(_to_dict)
             to_dfs_list.append(_to_df)
 
@@ -109,21 +107,39 @@ class PairsGenerator:
         subgraph_df = query_subgraph(chain_id=self.chain_id,
                                      address=address,
                                      edges=subgraph_edges)
-        subgraph_df['Diff2VecEmbedding'] = subgraph_df.apply(lambda row: getDiff2VecEmbedding(row), axis=1)
+        subgraph_df['Diff2VecEmbedding'] = subgraph_df.apply(lambda row: self.get_diff2vec_embedding(row), axis=1)
         subgraph_df = subgraph_df.explode(['vertices', 'Diff2VecEmbedding'])
         subgraph_df = subgraph_df[['_id', 'vertices', 'Diff2VecEmbedding']]
         return subgraph_df
 
+    @staticmethod
+    def get_diff2vec_embedding(row):
+        with io.capture_output() as captured:
+            walks, counts = run_parallel_feature_creation(row['edges'],
+                                                          16,
+                                                          4,
+                                                          4)
+            model = learn_pooled_embeddings(walks, counts)
+            embedding_row = list(map(lambda x: model.wv.get_vector(x), row['vertices']))
+        return embedding_row
 
-def getDiff2VecEmbedding(row):
-    with io.capture_output() as captured:
-        walks, counts = run_parallel_feature_creation(row['edges'],
-                                                      16,
-                                                      4,
-                                                      4)
-        model = learn_pooled_embeddings(walks, counts)
-        embedding_row = list(map(lambda x: model.wv.get_vector(x), row['vertices']))
-    return embedding_row
+    def combine_features(self, address) -> pd.DataFrame:
+        from_df, to_df = self.get_time_amount_feature(address)
+        node_embedding_df = self.get_node_embedding_feature(address)
+        node_embedding_df.reset_index(drop=True, inplace=True)
+
+        combined_df = combine_from_to(df_from=from_df, df_to=to_df, df_embedding=node_embedding_df)
+        pairs_df = generate_training_dataset(df=combined_df)
+        return pairs_df
+
+    def process_pairs_features(self, address) -> pd.DataFrame:
+        pairs_df = self.combine_features(address)
+        # pairs_df['X_Diff2VecEmbedding'] = pairs_df['X_Diff2VecEmbedding'].apply(lambda x: get_embedding_list(x))
+        # pairs_df['SubX_Diff2VecEmbedding'] = pairs_df['SubX_Diff2VecEmbedding'].apply(lambda x: get_embedding_list(x))
+        pairs_df['Diff2_Vec_Simi'] = pairs_df.apply(lambda x: diff_cosine(x), axis=1)
+        pairs_df[[f"X_Time{i}" for i in range(24)]] = pairs_df.X_Time.apply(pd.Series)
+        pairs_df[[f"SubX_Time{i}" for i in range(24)]] = pairs_df.SubX_Time.apply(pd.Series)
+        return pairs_df
 
 
 if __name__ == '__main__':
@@ -134,3 +150,5 @@ if __name__ == '__main__':
     # from_df, to_df = pair_generator.get_time_amount_feature(_address)
     # from_df.to_csv(f'{SAVING_DIR}/from_df.csv')
     # to_df.to_csv(f'{SAVING_DIR}/to_df.csv')
+    pairs_df = pair_generator.process_pairs_features(_address)
+    pairs_df.to_csv(f'{SAVING_DIR}/pairs_df.csv')
