@@ -30,8 +30,8 @@ class PairsGenerator:
             raise ValueError('Chain id must be 0x38 or 0x1')
 
         self.arango = ArangoDB(prefix=self.chain_name)
-        self.mongo = MongoDB()
-        self.mongo_entity = MongoDBEntity()
+        # self.mongo = MongoDB()
+        # self.mongo_entity = MongoDBEntity()
 
         self.prominent_tokens: set[str] = set()
 

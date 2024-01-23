@@ -118,9 +118,34 @@ class ArangoDB:
         except AssertionError:
             return False
 
+    def get_address(self, address):
+        _key = f'{self._chain_id}_{address}'
+        return self._addresses_col.get(_key)
+
+    def get_deposit_address(self, address):
+        _key = f'{self._chain_id}_{address}'
+        query = f"""
+                FOR v in 1..1 OUTBOUND '{self._addresses_col_name}/{_key}'
+                GRAPH {self._transfers_graph_name}
+                PRUNE v.wallet.hotWallet
+                FILTER v.wallet.depositWallet
+                RETURN v
+            """
+        return self._db.aql.execute(query=query)
+
+    def get_user_addresses(self, deposit_addresses: list[str]) -> list[str]:
+        _deposit_ids = [f'{self._addresses_col_name}/{self._chain_id}_{addr}'
+                        for addr in deposit_addresses]
+        query = f"""
+            FOR e in {self._transfers_col_name}
+            FILTER e._to in {_deposit_ids}
+            RETURN e._from
+        """
+        _cursor = self._db.aql.execute(query)
+        return [self._parse_id_to_key(_id).split('_')[-1] for _id in _cursor]
+
 
 if __name__ == '__main__':
     arango = ArangoDB(prefix='bsc')
-    a = arango.check_has_address(chain_id='0x38',
-                                 address='0x28590d49ab3d3677ffee8c5dd842c9863d4fd21a')
+    a = arango.check_has_address(address='0x28590d49ab3d3677ffee8c5dd842c9863d4fd21a')
     print(a)
