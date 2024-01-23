@@ -105,10 +105,9 @@ class PairsGenerator:
         return from_df, to_df
 
     def get_node_embedding_feature(self, address) -> pd.DataFrame:
-        subgraph_edges: list[Edge] = self.arango.get_subgraph_edges(address=address, depth=2)
         subgraph_df = query_subgraph(chain_id=self.chain_id,
                                      address=address,
-                                     edges=subgraph_edges)
+                                     graph_db=self.arango)
         subgraph_df['Diff2VecEmbedding'] = subgraph_df.apply(lambda row: self.get_diff2vec_embedding(row), axis=1)
         subgraph_df = subgraph_df.explode(['vertices', 'Diff2VecEmbedding'])
         subgraph_df = subgraph_df[['_id', 'vertices', 'Diff2VecEmbedding']]
