@@ -1,6 +1,3 @@
-import sys
-
-import pandas
 import pandas as pd
 import os
 import sys
@@ -38,14 +35,14 @@ def preprocess_subgraph(subgraph): #preprocess subgraph: get subgraph <= 100 ver
     return filterr
 
 
-def query_subgraph(chain_id, address, graph_db: ArangoDB) -> pandas.DataFrame:
+def query_subgraph(chain_id, address, graph_db: ArangoDB) -> pd.DataFrame:
     """query and preprocess the subgraph"""
     edges: list[Edge] = graph_db.get_subgraph_edges(address=address, depth=2)
-    edge_dicts_list = [{'from': e.from_address, 'to': e.to_address} for e in edges]
+    edge_dicts = [{'from': e.from_address, 'to': e.to_address} for e in edges]
     subgraph_df = pd.DataFrame([{'_id': f'{chain_id}_{address}',
                                  'address': address,
                                  'chainId': chain_id,
-                                 'edges': edge_dicts_list,
+                                 'edges': edge_dicts,
                                 }])
     prep_subgraph = preprocess_subgraph(subgraph_df)
     return prep_subgraph
