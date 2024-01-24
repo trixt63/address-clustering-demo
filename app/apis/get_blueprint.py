@@ -1,9 +1,13 @@
+import logging
+
 from sanic.response import json
 from sanic_ext import openapi, validate
 from sanic import Blueprint
 from sanic.response import json
 import random
 import pandas as pd
+from rapidfuzz.distance import JaroWinkler
+from itertools import product
 
 from app.decorators.json_validator import validate_with_jsonschema
 from app.models.address import AddressQuery
@@ -39,7 +43,8 @@ async def get_courses(request, query: AddressQuery):
         'error': 0
     }
 
-    # Heuristically
+    # Heuristics
+
     input_wallet = arangos[chain_id].get_address(address)
     if (not input_wallet) or (not input_wallet.get('numberSent')):
         returned_result['data']['heuristic'] = []
@@ -51,10 +56,11 @@ async def get_courses(request, query: AddressQuery):
         returned_result['data']['heuristic'] = []
         returned_result['message'] = 'Address is hot wallet or deposit wallet'
     else:
+        # deposit reuse
         deposit_wallets = list(arangos[chain_id].get_deposit_address(input_wallet['address']))
         if not deposit_wallets:
             returned_result['data']['heuristic'] = []
-            returned_result['message'] = 'Address is likely a bot'
+            returned_result['message'] = 'Address does not use CEX'
         else:
             deposit_addresses = [w['address'] for w in deposit_wallets]
             same_users = arangos[chain_id].get_user_addresses(deposit_addresses)
@@ -62,6 +68,19 @@ async def get_courses(request, query: AddressQuery):
             same_users.remove(address)
             returned_result['data']['heuristic'] = same_users
             returned_result['message'] = 'Successfully retrieve wallets'
+
+        # BNS
+        same_users_by_bns: set[str] = set()
+        if input_wallet.get('names'):
+            neighbors_with_names = list(arangos['0x38'].get_neighbors_with_names(address=address))
+            if neighbors_with_names:
+                for neighbor in neighbors_with_names:
+                    name_similarity, _ = calculate_max_similarity(input_wallet['names'], neighbor['names'])
+                    if name_similarity > 0.8:
+                        same_users_by_bns.add(neighbor['address'])
+
+        returned_result['data']['heuristic'].extend(list(same_users_by_bns))
+        returned_result['data']['heuristic'] = list(set(returned_result['data']['heuristic']))
 
     return json(returned_result)
 
@@ -71,3 +90,15 @@ async def get_courses(request, query: AddressQuery):
     # # _n_addresses = random.randint(1, 5)
     # addresses = [address] * _n_addresses
     # return json(addresses)
+
+
+def calculate_max_similarity(names1: list, names2: list) -> tuple[float, list]:
+    paired_names = list(product(names1, names2))
+    pairs_sim = [JaroWinkler.normalized_similarity(pair[0], pair[1])
+                 for pair in paired_names]
+    try:
+        max_value, max_index = max((value, index) for index, value in enumerate(pairs_sim))
+        return max_value, paired_names[max_index]
+    except ValueError as ex:
+        logging.exception(ex)
+        return 0, []

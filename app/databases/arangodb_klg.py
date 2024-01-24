@@ -133,6 +133,16 @@ class ArangoDB:
             """
         return self._db.aql.execute(query=query)
 
+    def get_neighbors_with_names(self, address):
+        _key = f'{self._chain_id}_{address}'
+        query = f"""
+                FOR v in 1..1 OUTBOUND '{self._addresses_col_name}/{_key}'
+                GRAPH {self._transfers_graph_name}
+                FILTER v.names
+                RETURN v
+            """
+        return self._db.aql.execute(query=query)
+
     def get_user_addresses(self, deposit_addresses: list[str]) -> list[str]:
         _deposit_ids = [f'{self._addresses_col_name}/{self._chain_id}_{addr}'
                         for addr in deposit_addresses]
