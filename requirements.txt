@@ -13,6 +13,7 @@ QueryStateLib==1.1.4
 selenium==4.6.0
 SQLAlchemy~=1.4.46
 timeout-decorator
+rapidfuzz
 
 #NetworkX==2.8.8
 texttable==1.6.7
