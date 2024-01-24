@@ -5,9 +5,10 @@ from app.misc.log import log
 
 
 def register_extensions(sanic_app: Sanic):
-    from app import extensions
-
-    extensions.cors = CORS(sanic_app, resources={r"/*": {"origins": "*"}})
+    sanic_app.config.CORS_ORIGINS = "*"
+    # from app import extensions
+    #
+    # extensions.cors = CORS(sanic_app, resources={r"/*": {"origins": "*"}})
 
 
 def register_views(sanic_app: Sanic):

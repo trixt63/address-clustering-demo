@@ -7,3 +7,8 @@ API
 - Generate pairs from subgraph
 - Feed to model
 - Return
+
+## Test cases:
+
+### For Ethereum:
+- 

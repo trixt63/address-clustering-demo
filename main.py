@@ -15,10 +15,10 @@ app = create_app(Config)
 
 app.blueprint(api)
 
-
-@app.route("/", methods={'GET', 'POST'})
-async def hello_world(request):
-    return text("Hello World")
+#
+# @app.route("/", methods={'GET', 'POST'})
+# async def hello_world(request):
+#     return text("Hello World")
 
 
 if __name__ == '__main__':

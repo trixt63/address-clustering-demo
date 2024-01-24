@@ -97,8 +97,8 @@ class Config:
     API_HOST = os.getenv('API_HOST', '0.0.0.0:8096')
     API_SCHEMES = os.getenv('API_SCHEMES', 'http')
     API_VERSION = os.getenv('API_VERSION', '0.1.0')
-    API_TITLE = os.getenv('API_TITLE', 'Centic API')
-    API_DESCRIPTION = os.getenv('API_DESCRIPTION', 'Swagger for Centic API')
+    API_TITLE = os.getenv('API_TITLE', 'Address Clustering API')
+    API_DESCRIPTION = os.getenv('API_DESCRIPTION', 'Swagger for Address Clustering API')
     API_CONTACT_EMAIL = os.getenv('API_CONTACT_EMAIL', 'example@gmail.com')
 
 
