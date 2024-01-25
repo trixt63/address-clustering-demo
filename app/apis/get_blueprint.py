@@ -82,7 +82,9 @@ async def get_wallets(request, query: AddressQuery):
         returned_result['data']['heuristic'].extend(list(same_users_by_bns))
         returned_result['data']['heuristic'] = list(set(returned_result['data']['heuristic']))
 
-    # returned_result['data']['heuristic'] = [chain_id, address]
+    # Predict
+    returned_result['data']['predict'] = ['0x123', '0x456']
+
     return json(returned_result)
 
 
