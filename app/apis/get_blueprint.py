@@ -66,7 +66,7 @@ async def get_wallets(request, query: AddressQuery):
             same_users = arangos[chain_id].get_user_addresses(deposit_addresses)
             same_users = set(same_users)
             same_users.remove(address)
-            returned_result['data']['heuristic'] = same_users
+            returned_result['data']['heuristic'] = list(same_users)
             returned_result['message'] = 'Successfully retrieve wallets'
 
         # BNS
