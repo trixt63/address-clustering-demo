@@ -18,3 +18,9 @@ class PredictModel:
         for row in data:
             results.append(self.model_by_chain[chain_id].predict(row))
         return results
+
+
+if __name__ == '__main__':
+    model = PredictModel()
+    test_df = pd.read_csv('data/pairs_df.csv')
+    print(len(test_df))

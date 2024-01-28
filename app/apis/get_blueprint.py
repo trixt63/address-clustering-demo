@@ -46,10 +46,10 @@ async def get_courses(request, query: AddressQuery):
     # Heuristics
 
     input_wallet = arangos[chain_id].get_address(address)
-    if (not input_wallet) or (not input_wallet.get('numberSent')):
+    if not input_wallet:
         returned_result['data']['heuristic'] = []
         returned_result['message'] = 'Address not present in graph'
-    elif input_wallet.get('numberSent') > 500:
+    elif input_wallet.get('numberSent', 0) > 500:
         returned_result['data']['heuristic'] = []
         returned_result['message'] = 'Address is likely a bot'
     elif input_wallet.get('wallet', {}):
@@ -72,7 +72,7 @@ async def get_courses(request, query: AddressQuery):
         # BNS
         same_users_by_bns: set[str] = set()
         if input_wallet.get('names'):
-            neighbors_with_names = list(arangos['0x38'].get_neighbors_with_names(address=address))
+            neighbors_with_names = list(arangos[chain_id].get_neighbors_with_names(address=address))
             if neighbors_with_names:
                 for neighbor in neighbors_with_names:
                     name_similarity, _ = calculate_max_similarity(input_wallet['names'], neighbor['names'])
